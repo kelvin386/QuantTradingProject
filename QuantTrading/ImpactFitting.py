@@ -28,7 +28,7 @@ def get_impact_state(traded_volume_df, monthly_scaling_factor, half_life, model_
     cum_impact = pre_ewm.ewm(alpha=1-decay_factor, adjust=False, axis="columns").mean()  # Across columns
     return cum_impact
 
-def get_regression_results(cum_impact, px_df, in_sample_month, explanation_horizon_periods):
+def get_regression_results(cum_impact, px_df, in_sample_month, explanation_horizon_periods, all=False):
     """
     Calculate the regression results for the given data.
     """
@@ -37,7 +37,7 @@ def get_regression_results(cum_impact, px_df, in_sample_month, explanation_horiz
     req_stat_df = req_stat_df.loc[req_stat_df["y"] >= 1e-4].copy()
     req_stat_df["date"] = pd.to_datetime(req_stat_df["date"])
     # Get the regression results for the given data
-    daily_stock_reg_info_df = regression_result_by_stock(req_stat_df, in_sample_month)
+    daily_stock_reg_info_df = regression_result_by_stock(req_stat_df, in_sample_month, all=all)
     return daily_stock_reg_info_df
 
 
@@ -63,13 +63,59 @@ def impact_regression_statistics(cum_impact, explanation_horizon_periods, px_df)
 
     return req_stat_df
 
-def regression_result_by_stock(daily_stock_reg_info_df, in_sample_month):
+def regression_result_by_stock(daily_stock_reg_info_df, in_sample_month, all=False):
     in_sample_df = daily_stock_reg_info_df.loc[daily_stock_reg_info_df["date"].dt.month == in_sample_month]
     out_sample_df = daily_stock_reg_info_df.loc[daily_stock_reg_info_df["date"].dt.month == in_sample_month + 1]
 
-    # Sum products over all dates (in month) for each stock
-    in_sample_summary_df = in_sample_df.groupby("stock")[["xy", "xx", "yy", "x", "y", "count"]].sum()
-    out_sample_summary_df = out_sample_df.groupby("stock")[["xy", "xx", "yy", "x", "y", "count"]].sum()
+    if not all:
+        # Sum products over all dates (in month) for each stock
+        in_sample_summary_df = in_sample_df.groupby("stock")[["xy", "xx", "yy", "x", "y", "count"]].sum()
+        out_sample_summary_df = out_sample_df.groupby("stock")[["xy", "xx", "yy", "x", "y", "count"]].sum()
+    else:
+        in_sample_summary_df = in_sample_df[["xy", "xx", "yy", "x", "y", "count"]].sum(axis=0).to_frame().T
+        out_sample_summary_df = out_sample_df[["xy", "xx", "yy", "x", "y", "count"]].sum(axis=0).to_frame().T
+
+    in_sample_summary_df.columns = "is_" + in_sample_summary_df.columns
+    out_sample_summary_df.columns = "oos_" + out_sample_summary_df.columns
+
+    # Already summed over dates for each stock, IS and OOS now two sets of columns to combine
+    summary_df = pd.merge(in_sample_summary_df, out_sample_summary_df, left_index=True, right_index=True, how="inner")
+
+    # Slope_hat = S_xy / S_xx
+    # I think the error was using is_x and is_y in computing expressions of beta
+    summary_df["beta_estimate"] = (summary_df["is_xy"] - summary_df["is_x"] * summary_df["is_y"] / summary_df["is_count"]) / \
+                                  (summary_df["is_xx"] - summary_df["is_x"]**2 / summary_df["is_count"])
+    # Intercept_hat = y_bar - slope_hat * x_bar
+    summary_df["alpha_estimate"] = (summary_df["is_y"] / summary_df["is_count"]) - \
+                                   (summary_df["beta_estimate"] * summary_df["is_x"] / summary_df["is_count"])
+
+    # SSE = Sum(y - yBar)^2 = S_yy - S_y^2/n
+    summary_df["is_sse"] = (summary_df["is_yy"] - summary_df["is_y"]**2 / summary_df["is_count"])  # typo here??
+    summary_df["is_mse"] = (summary_df["is_yy"]
+                           - 2 * summary_df["alpha_estimate"] * summary_df["is_y"]
+                           - 2 * summary_df["beta_estimate"] * summary_df["is_xy"]
+                           + 2 * summary_df["beta_estimate"] * summary_df["is_x"] * summary_df["alpha_estimate"]
+                           + summary_df["beta_estimate"]**2 * summary_df["is_xx"]
+                           + summary_df["alpha_estimate"]**2 * summary_df["is_count"])
+
+    # R^2 = 1 - MSE/SSE
+    summary_df["is_rsq"] = 1 - (summary_df["is_mse"] / summary_df["is_sse"])
+
+    summary_df["oos_sse"] = (summary_df["oos_yy"] - summary_df["oos_y"]**2 / summary_df["oos_count"])
+    summary_df["oos_mse"] = (summary_df["oos_yy"]
+                            - 2 * summary_df["alpha_estimate"] * summary_df["oos_y"]
+                            - 2 * summary_df["beta_estimate"] * summary_df["oos_xy"]
+                            + 2 * summary_df["beta_estimate"] * summary_df["oos_x"] * summary_df["alpha_estimate"]
+                            + summary_df["beta_estimate"]**2 * summary_df["oos_xx"]
+                            + summary_df["alpha_estimate"]**2 * summary_df["oos_count"])
+
+    summary_df["oos_rsq"] = 1 - (summary_df["oos_mse"] / summary_df["oos_sse"])
+
+    return summary_df
+
+def regression_result_all(daily_stock_reg_info_df, in_sample_month):
+    in_sample_summary_df = daily_stock_reg_info_df.loc[daily_stock_reg_info_df["date"].dt.month == in_sample_month].sum(axis=0)
+    out_sample_summary_df = daily_stock_reg_info_df.loc[daily_stock_reg_info_df["date"].dt.month == in_sample_month + 1].sum()
 
     in_sample_summary_df.columns = "is_" + in_sample_summary_df.columns
     out_sample_summary_df.columns = "oos_" + out_sample_summary_df.columns
