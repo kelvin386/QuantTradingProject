@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from scipy.optimize import minimize
 
 space_kernels = {
     "linear": lambda x: x,
@@ -74,24 +75,24 @@ def train_validation_split(req_stat_df, valid_fraction=0.2):
     
     return x, y, x_valid, y_valid
 
-def optimize_ridge(x, y, eta, initial_param, global_coef):
+def optimize_ridge(x, y, eta, initial_param, global_coef, loss_function):
     result = minimize(fun=loss_function, x0=initial_param, 
                     args=(x, y, global_coef["beta_estimate"].iloc[0], eta), 
                     method='SLSQP', options={'max_iter': 10000, 'disp': False})
     return result.x
 
-def validation_ridge(x_valid, y_alid, ridge_results):
+def validation_ridge(x_valid, y_valid, ridge_results):
     coef, intercept = ridge_results
     predictions = x_valid * coef + intercept
     return np.sum((y_valid - predictions) ** 2)
 
-def eta_info(x, y, x_valid, y_valid, eta_list, initial_params, global_coef):
+def eta_info(x, y, x_valid, y_valid, eta_list, initial_params, global_coef, loss_function):
     best_eta, best_params = None, None
     lowest_loss = np.inf
     eta_info = {eta: None for eta in eta_list}
 
     for eta in eta_list:
-        ridge_results = optimize_ridge(x, y, eta, initial_params, global_coef)
+        ridge_results = optimize_ridge(x, y, eta, initial_params, global_coef, loss_function)
         valid_loss = validation_ridge(x_valid, y_valid, ridge_results)
         eta_info[eta] = (ridge_results, valid_loss)
 
