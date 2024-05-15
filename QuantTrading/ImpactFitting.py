@@ -87,8 +87,6 @@ def validation_ridge(x_valid, y_valid, ridge_results):
     return np.sum((y_valid - predictions) ** 2)
 
 def eta_info(x, y, x_valid, y_valid, eta_list, initial_params, global_coef, loss_function):
-    best_eta, best_params = None, None
-    lowest_loss = np.inf
     eta_info = {eta: None for eta in eta_list}
 
     for eta in eta_list:
@@ -97,6 +95,8 @@ def eta_info(x, y, x_valid, y_valid, eta_list, initial_params, global_coef, loss
         eta_info[eta] = (ridge_results, valid_loss)
 
     return eta_info
+
+
 
 
 # Helper functions; very fucking nasty ##########################################
