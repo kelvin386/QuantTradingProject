@@ -69,12 +69,33 @@ def train_validation_split(req_stat_df, valid_fraction=0.2):
     valid_indices = indices[:int(valid_fraction * total_size)]
     train_indices = indices[int(valid_fraction * total_size):]
     
-    x, y = total_data['x'].iloc[train_indices], total_data['y'].iloc[train_indices]
-    x_valid, y_valid = total_data['x'].iloc[valid_indices], total_data['y'].iloc[valid_indices]
+    x, y = total_data['x'].loc[train_indices], total_data['y'].loc[train_indices]
+    x_valid, y_valid = total_data['x'].loc[valid_indices], total_data['y'].loc[valid_indices]
     
     return x, y, x_valid, y_valid
 
+def optimize_ridge(x, y, eta, initial_param, global_coef):
+    result = minimize(fun=loss_function, x0=initial_param, 
+                    args=(x, y, global_coef["beta_estimate"].iloc[0], eta), 
+                    method='SLSQP', options={'max_iter': 10000, 'disp': False})
+    return result.x
 
+def validation_ridge(x_valid, y_alid, ridge_results):
+    coef, intercept = ridge_results
+    predictions = x_valid * coef + intercept
+    return np.sum((y_valid - predictions) ** 2)
+
+def eta_info(x, y, x_valid, y_valid, eta_list, initial_params, global_coef):
+    best_eta, best_params = None, None
+    lowest_loss = np.inf
+    eta_info = {eta: None for eta in eta_list}
+
+    for eta in eta_list:
+        ridge_results = optimize_ridge(x, y, eta, initial_params, global_coef)
+        valid_loss = validation_ridge(x_valid, y_valid, ridge_results)
+        eta_info[eta] = (ridge_results, valid_loss)
+
+    return eta_info
 
 
 # Helper functions; very fucking nasty ##########################################
