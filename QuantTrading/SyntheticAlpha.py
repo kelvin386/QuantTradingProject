@@ -56,8 +56,6 @@ def synthetic_alpha(corr, px_df, stock, alpha_horizon):
         "actual": returns.unstack(),
         "synthetic": synthetic_returns.unstack(),
     })
-    
-    print(diagnosis(returns_df))
 
     return returns_df
 # End of Helper functions #######################################################
