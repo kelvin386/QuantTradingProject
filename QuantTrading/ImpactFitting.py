@@ -40,6 +40,42 @@ def get_regression_results(cum_impact, px_df, in_sample_month, explanation_horiz
     daily_stock_reg_info_df = regression_result_by_stock(req_stat_df, in_sample_month, all=all)
     return daily_stock_reg_info_df
 
+# For generalised model #########################################################
+def get_index_impact_coef(traded_volume_df, px_df, monthly_scaling_factor,
+                          half_life, model_type, in_sample_month):
+    """
+    Get index-level impact coef (a generalised impact model)
+    """
+    # Convert stock level data to 'index' data by taking means
+    traded_volume_df = traded_volume_df.groupby('date').mean()
+    px_df = px_df.groupby('date').mean()
+    monthly_scaling_factor = monthly_scaling_factor.groupby('date').mean()
+    
+    # plug in impact calculation and coef calculation functions
+    impact_px_df = get_impact_state(traded_volume_df, monthly_scaling_factor, 
+                                    half_life, model_type)
+    reg_summary = get_regression_results(impact_px_df, px_df, 
+                                            in_sample_month, explanation_horizon_periods=6, all=True)
+    
+    reg_summary['half_life'] = half_life
+    return reg_summary[['beta_estimate', 'alpha_estimate', 'is_rsq', 'half_life']]
+
+def train_validation_split(req_stat_df, valid_fraction=0.2):
+    total_data = req_stat_df[['x', 'y']]
+    total_size = len(total_data)
+    
+    indices = np.array(total_data.index)
+    np.random.shuffle(indices)
+    valid_indices = indices[:int(valid_fraction * total_size)]
+    train_indices = indices[int(valid_fraction * total_size):]
+    
+    x, y = total_data['x'].iloc[train_indices], total_data['y'].iloc[train_indices]
+    x_valid, y_valid = total_data['x'].iloc[valid_indices], total_data['y'].iloc[valid_indices]
+    
+    return x, y, x_valid, y_valid
+
+
+
 
 # Helper functions; very fucking nasty ##########################################
 
