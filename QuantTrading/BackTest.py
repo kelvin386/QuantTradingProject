@@ -15,6 +15,11 @@ def get_intended_impact(alphas_series, impact_summary, stock, model_type):
 
 def get_optimal_trades(monthly_scaling_factor, alphas_series, impact_summary,
                        stock, date, model_type):
+    '''
+    Get optimal trades for a stock at a given date;
+    OW and AFS models have different intended impacts and thus different optimal trades;
+    To get pct optimal trades, divide by ADV
+    '''
     px_vol, ADV = monthly_scaling_factor.loc[stock, date]
 
     impact_coef = impact_summary.loc[stock]['beta_estimate']
@@ -37,8 +42,8 @@ def get_optimal_trades(monthly_scaling_factor, alphas_series, impact_summary,
 
     optimal_trades.iloc[0] = intended_impacts.iloc[0] / (px_vol / ADV * impact_coef) # I_0^* / lambda
     optimal_trades.iloc[-1] += (alphas_series.iloc[-1] - intended_impacts.iloc[-2] * decay_factor) / (px_vol / ADV * impact_coef)
-    pct_synthetic_alpha_optimal_trades = optimal_trades / ADV
-    total_trade_sizes = pct_synthetic_alpha_optimal_trades.abs().sum()
     
-    return pct_synthetic_alpha_optimal_trades, total_trade_sizes
-
+    # pct_synthetic_alpha_optimal_trades = optimal_trades / ADV
+    # total_trade_sizes = pct_synthetic_alpha_optimal_trades.abs().sum()
+    
+    return optimal_trades
