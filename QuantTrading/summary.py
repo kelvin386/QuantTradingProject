@@ -35,3 +35,33 @@ def train_validation_split(req_stat_df, valid_fraction=0.2):
 
 def optimize_ridge(x, y, eta, initial_param, global_coef, loss_function):
 '''Fit the ridge regression model using the given data and loss function.'''
+
+############################################################################################################
+############################################################################################################
+#ALPHA ############################################################################################################
+def get_synthetic_alpha(corr, px_month, stock, alpha_horizon=6, 
+                        smooth=True, diagnosis=False):
+'''Get the synthetic alpha for the stock using the correlation and price data.
+   smooth=True: smooth the synthetic alpha using the exponential moving average.
+   diagnosis=True: return the sample correlation of return and alpha to diagnose'''
+   
+
+############################################################################################################
+############################################################################################################
+#TRADING STRAT ############################################################################################################
+# Main function
+def get_optimal_trades(monthly_scaling_factor, alphas_series, impact_summary,
+                       stock, date, model_type):
+'''Get optimal trades for a stock at a given date;
+monthly_scaling_factor: a shared preprocessed dataframe containing 
+                        Price Vol and ADV;
+alphas_series: the synthetic alpha series;
+impact_summary: the summary of model including half-life and impact coef'''
+   
+# Helper function called by get_optimal_trades
+def get_intended_impact(alphas_series, impact_summary, stock, model_type):
+'''get the intended impact for a stock given a model output
+   impact_summary: the summary of model including half-life and impact coef
+   model-type: OW or AFS'''
+   
+
