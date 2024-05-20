@@ -21,29 +21,29 @@ This project integrates various quantitative trading components into a cohesive 
 ## Impact Model Fitting
 ### Models
 - **Obizhaeva-Wang (OW) Model**: 
-    $$
+    \[
     dI_t = -\beta I_t dt + \lambda \frac{\sigma}{\text{ADV}} dQ_t
-    $$
+    \]
 - **Alfonsi-Fruth-Schied (AFS) Model**:
-    $$
+    \[
     dJ_t = -\beta J_t \, dt + \lambda \frac{\sigma}{\text{ADV}} \, dQ_t \\
     I_t = J_t^{0.5}
-    $$
+    \]
 
 ### Performance Metrics
 - **In-sample and Out-of-sample $R^2$**
 
 ## Backtest Engine
 ### Waelbroeck's Backtest Algorithm
-1. **Initialize Parameters**: Historical strategy $Q^r$, historical prices $P^r$, new strategy $Q$, price impact model $I$.
+1. **Initialize Parameters**: Historical strategy \(Q^r\), historical prices \(P^r\), new strategy \(Q\), price impact model \(I\).
 2. **Compute Fundamental Price**:
-    $$
+    \[
     S_t = P^r_t - I_t(Q^r)
-    $$
+    \]
 3. **Simulate New Prices**:
-    $$
+    \[
     P_t(Q) = P^r_t - I_t(Q^r) + I_t(Q)
-    $$
+    \]
 
 ### Backtest Procedure
 1. **Generate synthetic alpha series**
