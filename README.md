@@ -6,7 +6,7 @@
 - Ahmed Reda Seghrouchni
 
 ## Project Overview
-This project integrates various quantitative trading components into a cohesive framework, including data handling, model fitting, backtesting, optimal trading strategies, performance metrics, and sensitivity analysis. Examples and outputs illustrate both standard and advanced procedures.
+This project aims to integrate various quantitative trading components into a cohesive framework, including data handling, model fitting, backtesting, optimal trading strategies, performance metrics, and sensitivity analysis. We provide examples and outputs to illustrate both standard and advanced procedures.
 
 ## Data Scope
 ### Data Pre-processing
@@ -21,29 +21,19 @@ This project integrates various quantitative trading components into a cohesive 
 ## Impact Model Fitting
 ### Models
 - **Obizhaeva-Wang (OW) Model**: 
-    \[
-    dI_t = -\beta I_t dt + \lambda \frac{\sigma}{\text{ADV}} dQ_t
-    \]
+    - `dI_t = -βI_t dt + λ(σ/ADV) dQ_t`
 - **Alfonsi-Fruth-Schied (AFS) Model**:
-    \[
-    dJ_t = -\beta J_t \, dt + \lambda \frac{\sigma}{\text{ADV}} \, dQ_t \\
-    I_t = J_t^{0.5}
-    \]
+    - `dJ_t = -βJ_t dt + λ(σ/ADV) dQ_t`
+    - `I_t = J_t^0.5`
 
 ### Performance Metrics
 - **In-sample and Out-of-sample $R^2$**
 
 ## Backtest Engine
-### Waelbroeck's Backtest Algorithm
-1. **Initialize Parameters**: Historical strategy \(Q^r\), historical prices \(P^r\), new strategy \(Q\), price impact model \(I\).
-2. **Compute Fundamental Price**:
-    \[
-    S_t = P^r_t - I_t(Q^r)
-    \]
-3. **Simulate New Prices**:
-    \[
-    P_t(Q) = P^r_t - I_t(Q^r) + I_t(Q)
-    \]
+Implemented using Waelbroeck's Backtest Algorithm:
+1. **Initialize Parameters**: Historical strategy `Qr`, historical prices `Pr`, new strategy `Q`, price impact model `I`.
+2. **Compute Fundamental Price**: `St = Pr - I(Qr)`
+3. **Simulate New Prices**: `P(Q) = Pr - I(Qr) + I(Q)`
 
 ### Backtest Procedure
 1. **Generate synthetic alpha series**
@@ -74,4 +64,4 @@ This project integrates various quantitative trading components into a cohesive 
 - **Trade/ADV under different correlations and models**
 - **Synthetic Alphas and Impacts under different correlations and models**
 - **Trade/ADV under different alpha horizons and models**
-- **Forced Liquidation Prices and Impact**
+- **Forced Liquidation Prices**
